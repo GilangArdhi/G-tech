@@ -24,8 +24,8 @@
 #include <MFRC522.h> 
 #include <LiquidCrystal_I2C.h>
 #include <Wire.h>
-#define SS_PIN        D8      // D8 NodeMCU
-#define RST_PIN       D4      // D0 NodeMCU
+#define SS_PIN        D8     
+#define RST_PIN       D4      
 
 byte uid[4];
 String cardID;
@@ -40,9 +40,6 @@ void setup() {
   lcd.backlight();
   SPI.begin();
 
-  lcd.setCursor(0, 0);
-  lcd.print("Nama Gym");
-//  
   // Initial MFRC RFID Reader Module 
   rfid.PCD_Init();
   rfid.PCD_SetAntennaGain(rfid.RxGain_max);
@@ -52,17 +49,14 @@ void setup() {
 
 void loop() {
   lcd.setCursor(0, 0);
-  lcd.print("abccde");
+  lcd.print("Nama Gym");
   if (rfid.PICC_IsNewCardPresent() && rfid.PICC_ReadCardSerial()) {
     for (byte i=0; i<4; i++) {
       uid[i] = rfid.uid.uidByte[i];
     }
     printHex(rfid.uid.uidByte, rfid.uid.size);
     Serial.println();
-//      lcd.setCursor(0, 0);
-//  lcd.print ("Card ID : ");
-//  lcd.setCursor(0, 1);
-//  lcd.print (cardID);
+     
     rfid.PICC_HaltA();
     rfid.PCD_StopCrypto1();
   }
@@ -79,6 +73,12 @@ void printHex(byte *buffer, byte bufferSize) {
     cardID.toUpperCase();
   } 
   Serial.print(cardID);
-  
-  
+  if ( cardID != ""){
+    lcd.setCursor(0, 0);
+    lcd.print("Selamat Datang");
+    lcd.setCursor(0, 1);
+    lcd.print(cardID);
+    delay(3000);
+    lcd.clear();    
+  }
 }
