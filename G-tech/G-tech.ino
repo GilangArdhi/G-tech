@@ -1,17 +1,19 @@
 #include <ESP8266HTTPClient.h>
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
-#include <ESP8266WiFiMulti.h>
+//#include <ESP8266WiFiMulti.h>
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
 #include <SPI.h>
 #include <MFRC522.h> 
 #include <Arduino_JSON.h>
+#include <Arduino.h>
 #include "GetScheduleJson.h"
 #include "GetStatusJson.h"
 
 LiquidCrystal_I2C lcd = LiquidCrystal_I2C(0x27, 16, 2);
 WiFiClient client;
+//WiFiClientSecure client;
 
 #define SS_PIN        D8     
 #define RST_PIN       D4 
@@ -22,16 +24,17 @@ const char* tagcard;
 
 MFRC522 rfid(SS_PIN, RST_PIN); 
 
-ESP8266WiFiMulti WiFiMulti;
+//ESP8266WiFiMulti WiFiMulti;
 
 //konfigurasi WiFi
 const char *ssid = "MSI 3906";
 const char *pass = "12345678";
 //Your Domain name with URL path or IP address with path
-const char* serverName = "http://192.168.137.102/api/user?id_card=11273926&apikey=8105e86f-b71e-4a45-9708-5f1295b62263";
+const char* serverName = "card.conect.id"; ///api/user?id_card=11273926&apikey=8105e86f-b71e-4a45-9708-5f1295b62263";
 
 //Your Domain name with URL path or IP address with path
-String namaServer = "http://192.168.1.106:1880/update-sensor";
+String namaServer = "https://card.conect.id/api/user?id_card=";
+String namaServer1 = "&apikey=8105e86f-b71e-4a45-9708-5f1295b6226";
 
 
 // the following variables are unsigned longs because the time, measured in
@@ -46,13 +49,6 @@ String sensorReadings;
 float sensorReadingsArr[3];
 
 
-//void setLCD(){
-//  lcd.init();
-//  lcd.backlight();
-////  lcd.clear();
-////  lcd.setCursor(0, 0);
-////  lcd.print("Nama Gym");
-//}
 
 void connectWifi(){
 //  Serial.begin(115200); //Default Baudrate
@@ -84,7 +80,7 @@ void setup() {
   // Initial MFRC RFID Reader Module 
   rfid.PCD_Init();
   rfid.PCD_SetAntennaGain(rfid.RxGain_max);
-  lcd.clear();
+//  lcd.clear();
 }
 
 void loop() {
@@ -96,10 +92,8 @@ void loop() {
       uid[i] = rfid.uid.uidByte[i];
     }
     tulisHexa(rfid.uid.uidByte, rfid.uid.size);
-//    connToWeb(cardID);
     Serial.println();
-
-    conbackWeb();
+//    conbackWeb();
      
     rfid.PICC_HaltA();
     rfid.PCD_StopCrypto1();
@@ -118,22 +112,12 @@ void tulisHexa (byte *buffer, byte bufferSize){
   } 
   Serial.print(cardID);
   if ( cardID != ""){
-//    connToWeb(cardID);
-    lcd.setCursor(0, 0);
-    lcd.print("Selamat Datang");
-    lcd.setCursor(0, 1);
-    lcd.print(cardID);
-    writeData(cardID, namaServer);
-//    int tagcard_len = tagcard.length();
-//    char char_arr[tagcard_len];
-//    tagcard.toCharArray(char_arr, tagcard_len);
-    delay(3000);
-    lcd.clear();  
-      
+//    writeData(cardID, namaServer, namaServer1);
+    connWeb(cardID, serverName);
   }
 }
 
-void writeData(String cardID, String namaServer) {
+void writeData(String cardID, String namaServer, String namaServer1) {
   // Send an HTTP POST request depending on timerDelay
   if ((millis() - lastTime) > timerDelay) {
     //Check WiFi connection status
@@ -141,7 +125,7 @@ void writeData(String cardID, String namaServer) {
       WiFiClient client;
       HTTPClient http;
 
-      String serverPath = namaServer + cardID;
+      String serverPath = namaServer + cardID + namaServer1;
       
       // Your Domain name with URL path or IP address with path
       http.begin(client, serverPath.c_str());
@@ -172,6 +156,67 @@ void writeData(String cardID, String namaServer) {
   }
 }
 
+
+void connWeb(String cardID, const char* serverName) {
+  delay(5000);
+
+  Serial.println();
+  Serial.print("connecting to ");
+  Serial.println(serverName);
+
+  // Use WiFiClient class to create TCP connections
+  WiFiClientSecure client;
+  const int httpsPort = 443; // 80 is for HTTP / 443 is for HTTPS!
+  
+  client.setInsecure(); // this is the magical line that makes everything work
+  
+  if (!client.connect(serverName, httpsPort)) { //works!
+    Serial.println("connection failed");
+    return;
+  } else {
+    Serial.println("connection success");
+  }
+
+  // We now create a URI for the request
+  String url = "https://card.conect.id/api/user?id_card=";
+  url += cardID;
+  url += "&apikey=8105e86f-b71e-4a45-9708-5f1295b6226";
+
+
+  Serial.print("Requesting URL: ");
+  Serial.println(url);
+
+  // This will send the request to the server
+  client.print(String("GET ") + url + " HTTP/1.1\r\n" +
+               "Host: " + serverName + "\r\n" + 
+               "Connection: close\r\n\r\n");
+
+  unsigned long timeout = millis();
+  while (client.available() == 0) {
+    if (millis() - timeout > 1000) {
+      Serial.println(">>> Client Timeout !");
+      client.stop();
+      return;
+    }
+  }
+  // Read all the lines of the reply from server and print them to Serial
+  //ngga kebaca karena client.available() == 0
+  while (client.available()) {
+    String line = client.readStringUntil('\r');
+    Serial.print(line);
+    /*processScheduleData(line);
+    Serial.print("Nama : "); Serial.println(namaOnSchedule); 
+    lcd.setCursor(0,0);lcd.print(namaOnSchedule); //Ex: 01:00:00,20:00:00 
+    Serial.print("Expired Data : "); Serial.println(expiredOnSchedule);
+    lcd.setCursor(0,1);lcd.print(expiredOnSchedule);
+    delay(3000);
+    lcd.clear();//Ex: 01:30:00,20:30:00*/
+ }
+  Serial.println();
+  Serial.println("closing connection");
+}
+
+/*
 void conbackWeb() {
   // Send an HTTP POST request depending on timerDelay
   if ((millis() - lastTime) > timerDelay) {
@@ -181,19 +226,19 @@ void conbackWeb() {
       sensorReadings = httpGETRequest(serverName);
       Serial.println(sensorReadings);
       
-      //Contoh untuk http://digitaloxyfarming.com/api/output?api_key=HPHU5LAs7i4QIX1q
-          processStatusData(payload);
-          Serial.println(statusMessage);
-          Serial.println(statusCode);
-          Serial.println(statusNama);
-          Serial.println(statusExpired); 
-
-          //Contoh untuk http://digitaloxyfarming.com/api/schedule/today?api_key=HPHU5LAs7i4QIX1q
-          processScheduleData(payload);
-          Serial.print("Nama"); Serial.println(namaSchedule); //Ex: 01:00:00,20:00:00 
-          Serial.print("P Off: "); Serial.println(expiredOffSchedule); //Ex: 01:30:00,20:30:00
-//          Serial.print("F On: "); Serial.println(fertilizerOnSchedule); //Ex: 01:00:00,01:01:00,01:02:00
-//          Serial.print("F Off: "); Serial.println(fertilizerOffSchedule); //Ex: 01:01:00,01:02:00,01:03:00
+//      //Contoh untuk http://digitaloxyfarming.com/api/output?api_key=HPHU5LAs7i4QIX1q
+//          processStatusData(payload);
+//          Serial.println(statusMessage);
+//          Serial.println(statusCode);
+//          Serial.println(statusNama);
+//          Serial.println(statusExpired); 
+//
+//          //Contoh untuk http://digitaloxyfarming.com/api/schedule/today?api_key=HPHU5LAs7i4QIX1q
+//          processScheduleData(payload);
+//          Serial.print("Nama : "); Serial.println(namaSchedule); //Ex: 01:00:00,20:00:00 
+//          Serial.print("Expired Data : "); Serial.println(expiredSchedule); //Ex: 01:30:00,20:30:00
+////          Serial.print("F On: "); Serial.println(fertilizerOnSchedule); //Ex: 01:00:00,01:01:00,01:02:00
+////          Serial.print("F Off: "); Serial.println(fertilizerOffSchedule); //Ex: 01:01:00,01:02:00,01:03:00
       /*JSONVar myObject = JSON.parse(sensorReadings);
   
       // JSON.typeof(jsonVar) can be used to get the type of the var
@@ -220,7 +265,7 @@ void conbackWeb() {
       Serial.print("2 = ");
       Serial.println(sensorReadingsArr[1]);
       Serial.print("3 = ");
-      Serial.println(sensorReadingsArr[2]);*/
+      Serial.println(sensorReadingsArr[2]);
     }
     else {
       Serial.println("WiFi Disconnected");
@@ -231,6 +276,7 @@ void conbackWeb() {
 
 String httpGETRequest(const char* serverName) {
   WiFiClient client;
+//  WiFiClientSecure client;
   HTTPClient http;
     
   // Your IP address with path or Domain name with URL path 
@@ -248,6 +294,24 @@ String httpGETRequest(const char* serverName) {
     Serial.print("HTTP Response code: ");
     Serial.println(httpResponseCode);
     payload = http.getString();
+
+    //Contoh untuk http://digitaloxyfarming.com/api/output?api_key=HPHU5LAs7i4QIX1q
+//          processStatusData(payload);
+//          Serial.println(statusMessage);
+//          Serial.println(statusCode);
+//          Serial.println(statusNama);
+//          Serial.println(statusExpired); 
+
+          //Contoh untuk http://digitaloxyfarming.com/api/schedule/today?api_key=HPHU5LAs7i4QIX1q
+          processScheduleData(payload);
+          Serial.print("Nama : "); Serial.println(namaOnSchedule); 
+          lcd.setCursor(0,0);lcd.print(namaOnSchedule); //Ex: 01:00:00,20:00:00 
+          Serial.print("Expired Data : "); Serial.println(expiredOnSchedule);
+          lcd.setCursor(0,1);lcd.print(expiredOnSchedule);
+          delay(3000);
+          lcd.clear();//Ex: 01:30:00,20:30:00
+//          Serial.print("F On: "); Serial.println(fertilizerOnSchedule); //Ex: 01:00:00,01:01:00,01:02:00
+//          Serial.print("F Off: "); Serial.println(fertilizerOffSchedule); //Ex: 01:01:00,01:02:00,01:03:00
   }
   else {
     Serial.print("Error code: ");
@@ -258,50 +322,8 @@ String httpGETRequest(const char* serverName) {
 
   return payload;
 }
+*/
 
-
-//void connToWeb(String cardID){
-//  Serial.print("connecting to ");
-//  Serial.println(host);
-//  // Mengirimkan ke alamat host webclient dengan port 80 
-//  WiFiClient client;
-//  const int httpPort = 80;
-//  if (!client.connect(host, httpPort)) {
-//   Serial.println("connection failed");
-//   return;
-//  }
-//  // We now create a URI for the request String url="";
-//  String url="";
-//  url = "tulis disini";
-//  url += cardID;
-//  Serial.print("Requesting URL: ");
-//  Serial.println(url);
-//  // Mengirimkan Request ke Server
-//  client.print(String("GET ") + url + " HTTP/1.1\r\n" +
-//  "Host: " + host + "\r\n" +
-//  "Connection: close\r\n\r\n");
-//  unsigned long timeout = millis();
-//  while (client.available() == 0) {
-//    if (millis() - timeout > 1000) {
-//      Serial.println(">>> Client Timeout !");
-//      client.stop();
-//      return;
-//    }
-//  }
-//  // Read all the lines of the reply from server and print them to Serial
-//  while (client.available()) {
-//    String line = client.readStringUntil('\r');
-//    Serial.print(line);
-//    lcd.clear();
-//    lcd.print("UID CARD:");
-//    lcd.print(cardID);
-//    lcd.setCursor(0, 1);
-//    lcd.print(line);
-//  }
-//  Serial.println("");
-//  Serial.println("closing connection");
-//}
-//
 //void connectWeb() {
 //  // wait for WiFi connection
 //  if ((WiFiMulti.run() == WL_CONNECTED)) {

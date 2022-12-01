@@ -2,7 +2,7 @@
 #include <ArduinoJson.hpp>
 
 DynamicJsonDocument statusJson(2048);
-String statusMessage, statusNama, statusExpired;
+String statusMessage, statusNama, statusExpired, statusCode;
 
 void processStatusData(String data){
   int strLen = data.length() + 1;
@@ -19,8 +19,8 @@ void processStatusData(String data){
   
   statusMessage = String(msg);
   statusCode = String(code);
-  statusNama = statusData["nama_lengkap"];
-  statusExpired = statusData["exp_date"];
+  statusNama = statusData["nama_lengkap"].as<String>();
+  statusExpired = statusData["exp_date"].as<String>();
 
   statusJson.clear();
 }

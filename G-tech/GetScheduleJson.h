@@ -3,7 +3,7 @@
 
 DynamicJsonDocument scheduleJson(2048);
 
-String scheduleMessage, pumpOnSchedule, pumpOffSchedule, fertilizerOnSchedule, fertilizerOffSchedule;
+String scheduleMessage, namaOnSchedule, expiredOnSchedule;
 
 String removeChars(String data, char deleted){
   int idx = data.indexOf(deleted);
@@ -24,9 +24,9 @@ void processScheduleData(String data){
 
   deserializeJson(scheduleJson, charArr);
 
-//  const char* msg = scheduleJson["message"];
+  const char* msg = scheduleJson["message"];
   JsonObject scheduleCode = scheduleJson["code"];
-  JsonObject schedulemessage = scheduleJson["data"];
+  JsonObject schedulemessage = scheduleJson["massage"];
   JsonObject scheduleData = scheduleJson["data"];
 
   JsonObject namaSchedule = scheduleData["nama_lengkap"];
@@ -35,7 +35,7 @@ void processScheduleData(String data){
   namaOnSchedule = namaSchedule["nama_lengkap"].as<String>();
 //  pumpOffSchedule = pumpSchedule["off"].as<String>();
 
-  expiredOnSchedule = fertilizerSchedule["exp_date"].as<String>();
+  expiredOnSchedule = expiredSchedule["exp_date"].as<String>();
 //  fertilizerOffSchedule = fertilizerSchedule["off"].as<String>();
 
 
