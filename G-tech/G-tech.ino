@@ -34,7 +34,7 @@ const char* serverName = "card.conect.id"; ///api/user?id_card=11273926&apikey=8
 
 //Your Domain name with URL path or IP address with path
 String namaServer = "https://card.conect.id/api/user?id_card=";
-String namaServer1 = "&apikey=8105e86f-b71e-4a45-9708-5f1295b6226";
+String namaServer1 = "&apikey=8105e86f-b71e-4a45-9708-5f1295b62263";
 
 
 // the following variables are unsigned longs because the time, measured in
@@ -180,7 +180,7 @@ void connWeb(String cardID, const char* serverName) {
   // We now create a URI for the request
   String url = "https://card.conect.id/api/user?id_card=";
   url += cardID;
-  url += "&apikey=8105e86f-b71e-4a45-9708-5f1295b6226";
+  url += "&apikey=8105e86f-b71e-4a45-9708-5f1295b62263";
 
 
   Serial.print("Requesting URL: ");
