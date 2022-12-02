@@ -12,10 +12,14 @@
 #include "GetScheduleJson.h"
 #include "GetStatusJson.h"
 
+
+
 LiquidCrystal_I2C lcd = LiquidCrystal_I2C(0x27, 16, 2);
 //WiFiClient client;
 WiFiClientSecure client;
 
+#define ledMerah      D0
+#define ledHijau      11
 #define SS_PIN        D8     
 #define RST_PIN       D4 
 
@@ -45,6 +49,9 @@ unsigned long lastTime = 0;
 //unsigned long timerDelay = 600000;
 // Set timer to 5 seconds (5000)
 unsigned long timerDelay = 5000;
+//
+//unsigned long milis = millis();
+unsigned long temp = 0;
 
 String sensorReadings;
 float sensorReadingsArr[3];
@@ -81,13 +88,17 @@ void setup() {
   // Initial MFRC RFID Reader Module 
   rfid.PCD_Init();
   rfid.PCD_SetAntennaGain(rfid.RxGain_max);
+  pinMode(ledMerah, OUTPUT);
+  digitalWrite(ledMerah, LOW);
+//  pinMode(ledHijau, OUTPUT);
+//  digitalWrite(ledHijau, LOW);
 //  lcd.clear();
 }
 
 void loop() {
   
-  lcd.setCursor(0, 0);
-  lcd.print("Nama Gym");
+  lcd.setCursor(5, 0);
+  lcd.print("G-Tech");
   if (rfid.PICC_IsNewCardPresent() && rfid.PICC_ReadCardSerial()) {
     for (byte i=0; i<4; i++) {
       uid[i] = rfid.uid.uidByte[i];
@@ -155,6 +166,8 @@ void connWeb(String cardID, const char* serverName) {
 
   while (client.connected()) {
       String line = client.readStringUntil('\n');
+//      Serial.print("data : ");
+//      Serial.println(line);
       if (line == "\r") {  
         Serial.println("headers received");
         break;
@@ -167,9 +180,17 @@ void connWeb(String cardID, const char* serverName) {
     processScheduleData(line);
     Serial.print("Nama : "); 
     Serial.println(namaOnSchedule); 
-//    if (namaOnSchedule != null){
+    if (namaOnSchedule == null){
       lcd.setCursor(0,0);
-      lcd.print(namaOnSchedule); //Ex: 01:00:00,20:00:00 
+      lcd.print("Gilang Ardhi Saputra");
+//      lcd.print(namaOnSchedule);
+//      lcd.print(namaOnSchedule); //Ex: 01:00:00,20:00:00 
+//      while (namaOnSchedule !=null){
+//        if (millis() - temp < 2000){
+//          digitalWrite(ledHijau, HIGH);
+//          break;
+    }
+      
 //    }
     Serial.print("Kartu : "); Serial.println(messageOnSchedule);
     lcd.setCursor(0,1);lcd.print(messageOnSchedule);
@@ -181,6 +202,12 @@ void connWeb(String cardID, const char* serverName) {
       lcd.print("Masa Kartu Habis");
     }*/
     if (messageOnSchedule != "Gagal" && messageOnSchedule != "Masa Kartu Habis"){
+//      while (messageOnSchedule != "Gagal" && messageOnSchedule != "Masa Kartu Habis"){
+//        if (millis() - temp < 2000){
+//          digitalWrite(ledMerah, HIGH);
+//          break;
+//        }
+      
       Serial.print("Expired Data : "); Serial.println(expiredOnSchedule);
       lcd.setCursor(0,1);
       lcd.print(expiredOnSchedule);
@@ -230,9 +257,8 @@ void writeData(String cardID, String namaServer, String namaServer1) {
     lastTime = millis();
   }
 }
-*/
 
-/*
+
 void conbackWeb() {
   // Send an HTTP POST request depending on timerDelay
   if ((millis() - lastTime) > timerDelay) {
