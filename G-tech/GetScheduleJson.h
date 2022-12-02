@@ -26,7 +26,7 @@ void processScheduleData(String data){
 
   const char* msg = scheduleJson["message"];
   JsonObject scheduleCode = scheduleJson["code"];
-  JsonObject schedulemessage = scheduleJson["massage"];
+//  JsonObject scheduleMessage = scheduleJson["massage"];
   JsonObject scheduleData = scheduleJson["data"];
 
   JsonObject namaSchedule = scheduleData["nama_lengkap"];

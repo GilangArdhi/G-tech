@@ -1,6 +1,7 @@
 #include <ESP8266HTTPClient.h>
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
+#include <WiFiClientSecure.h>
 //#include <ESP8266WiFiMulti.h>
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
@@ -12,8 +13,8 @@
 #include "GetStatusJson.h"
 
 LiquidCrystal_I2C lcd = LiquidCrystal_I2C(0x27, 16, 2);
-WiFiClient client;
-//WiFiClientSecure client;
+//WiFiClient client;
+WiFiClientSecure client;
 
 #define SS_PIN        D8     
 #define RST_PIN       D4 
@@ -117,6 +118,78 @@ void tulisHexa (byte *buffer, byte bufferSize){
   }
 }
 
+
+void connWeb(String cardID, const char* serverName) {
+  delay(2000);
+
+  Serial.println();
+  Serial.print("connecting to ");
+  Serial.println(serverName);
+
+  // Use WiFiClient class to create TCP connections
+  WiFiClientSecure client;
+  const int httpsPort = 443; // 80 is for HTTP / 443 is for HTTPS!
+  
+  client.setInsecure(); // this is the magical line that makes everything work
+  
+  if (!client.connect(serverName, httpsPort)) { //works!
+    Serial.println("connection failed");
+    return;
+  } else {
+    Serial.println("connection success");
+  }
+
+  // We now create a URI for the request
+  String url = "https://card.conect.id/api/user?id_card=";
+  url += cardID;
+  url += "&apikey=8105e86f-b71e-4a45-9708-5f1295b62263";
+
+
+  Serial.print("Requesting URL: ");
+  Serial.println(url);
+
+  // This will send the request to the server
+  client.print(String("GET ") + url + " HTTP/1.1\r\n" +
+               "Host: " + serverName + "\r\n" + 
+               "Connection: close\r\n\r\n");
+
+  while (client.connected()) {
+      String line = client.readStringUntil('\n');
+      if (line == "\r") {
+        Serial.println("headers received");
+        break;
+      }
+    }
+  // Read all the lines of the reply from server and print them to Serial0
+    String line = client.readString();
+    Serial.print(line);
+    processScheduleData(line);
+    Serial.print("Nama : "); Serial.println(namaOnSchedule); 
+    if (namaOnSchedule != null){
+      lcd.setCursor(0,0);
+      lcd.print(namaOnSchedule); //Ex: 01:00:00,20:00:00 
+    }
+    Serial.print("Kartu : "); Serial.println(scheduleMessage);
+    lcd.setCursor(0,1);lcd.print(scheduleMessage);
+    if (scheduleMessage == "Gagal"){
+      lcd.setCursor(0,1);
+      lcd.print("Kartu Belum Terdaftar");
+    }else if (scheduleMessage == "Masa Kartu Habis"){
+      lcd.setCursor(0,1);
+      lcd.print("Masa Kartu Habis");
+    }
+    if (scheduleMessage != "Gagal" && "Masa Kartu Habis"){
+      Serial.print("Expired Data : "); Serial.println(expiredOnSchedule);
+      lcd.setCursor(0,1);
+      lcd.print(expiredOnSchedule);
+    }
+    delay(3000);
+    lcd.clear();//Ex: 01:30:00,20:30:00
+  Serial.println();
+  Serial.println("closing connection");
+}
+
+/*
 void writeData(String cardID, String namaServer, String namaServer1) {
   // Send an HTTP POST request depending on timerDelay
   if ((millis() - lastTime) > timerDelay) {
@@ -155,66 +228,7 @@ void writeData(String cardID, String namaServer, String namaServer1) {
     lastTime = millis();
   }
 }
-
-
-void connWeb(String cardID, const char* serverName) {
-  delay(5000);
-
-  Serial.println();
-  Serial.print("connecting to ");
-  Serial.println(serverName);
-
-  // Use WiFiClient class to create TCP connections
-  WiFiClientSecure client;
-  const int httpsPort = 443; // 80 is for HTTP / 443 is for HTTPS!
-  
-  client.setInsecure(); // this is the magical line that makes everything work
-  
-  if (!client.connect(serverName, httpsPort)) { //works!
-    Serial.println("connection failed");
-    return;
-  } else {
-    Serial.println("connection success");
-  }
-
-  // We now create a URI for the request
-  String url = "https://card.conect.id/api/user?id_card=";
-  url += cardID;
-  url += "&apikey=8105e86f-b71e-4a45-9708-5f1295b62263";
-
-
-  Serial.print("Requesting URL: ");
-  Serial.println(url);
-
-  // This will send the request to the server
-  client.print(String("GET ") + url + " HTTP/1.1\r\n" +
-               "Host: " + serverName + "\r\n" + 
-               "Connection: close\r\n\r\n");
-
-  unsigned long timeout = millis();
-  while (client.available() == 0) {
-    if (millis() - timeout > 1000) {
-      Serial.println(">>> Client Timeout !");
-      client.stop();
-      return;
-    }
-  }
-  // Read all the lines of the reply from server and print them to Serial
-  //ngga kebaca karena client.available() == 0
-  while (client.available()) {
-    String line = client.readStringUntil('\r');
-    Serial.print(line);
-    /*processScheduleData(line);
-    Serial.print("Nama : "); Serial.println(namaOnSchedule); 
-    lcd.setCursor(0,0);lcd.print(namaOnSchedule); //Ex: 01:00:00,20:00:00 
-    Serial.print("Expired Data : "); Serial.println(expiredOnSchedule);
-    lcd.setCursor(0,1);lcd.print(expiredOnSchedule);
-    delay(3000);
-    lcd.clear();//Ex: 01:30:00,20:30:00*/
- }
-  Serial.println();
-  Serial.println("closing connection");
-}
+*/
 
 /*
 void conbackWeb() {
