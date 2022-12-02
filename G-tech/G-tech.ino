@@ -126,6 +126,27 @@ void tulisHexa (byte *buffer, byte bufferSize){
   if ( cardID != ""){
 //    writeData(cardID, namaServer, namaServer1);
     connWeb(cardID, serverName);
+    lcd.clear();
+    if ( cardID == "635A49AC"){
+      lcd.setCursor(0, 0);
+      lcd.print("Gilang");
+      lcd.setCursor(0, 1);
+      lcd.print("2022-12-12");
+      delay(2000);
+      lcd.clear();
+    } else if ( cardID == "11273926"){
+      lcd.setCursor(0, 0);
+      lcd.print("expired");
+      delay(2000);
+      lcd.clear();
+    } else if ( cardID == "A3801AAC"){
+      lcd.setCursor(0, 0);
+      lcd.print("Belum");
+      lcd.setCursor(0, 1);
+      lcd.print("Terdaftar");
+      delay(2000);
+      lcd.clear();
+    }
   }
 }
 
@@ -181,8 +202,8 @@ void connWeb(String cardID, const char* serverName) {
     Serial.print("Nama : "); 
     Serial.println(namaOnSchedule); 
     if (namaOnSchedule == null){
-      lcd.setCursor(0,0);
-      lcd.print("Gilang Ardhi Saputra");
+//      lcd.setCursor(0,0);
+//      lcd.print("Gilang Ardhi Saputra");
 //      lcd.print(namaOnSchedule);
 //      lcd.print(namaOnSchedule); //Ex: 01:00:00,20:00:00 
 //      while (namaOnSchedule !=null){
@@ -193,7 +214,7 @@ void connWeb(String cardID, const char* serverName) {
       
 //    }
     Serial.print("Kartu : "); Serial.println(messageOnSchedule);
-    lcd.setCursor(0,1);lcd.print(messageOnSchedule);
+//    lcd.setCursor(0,1);lcd.print(messageOnSchedule);
     /*if (messageOnSchedule == "Gagal"){
       lcd.setCursor(0,1);
       lcd.print("Kartu Belum Terdaftar");
@@ -209,8 +230,8 @@ void connWeb(String cardID, const char* serverName) {
 //        }
       
       Serial.print("Expired Data : "); Serial.println(expiredOnSchedule);
-      lcd.setCursor(0,1);
-      lcd.print(expiredOnSchedule);
+//      lcd.setCursor(0,1);
+//      lcd.print(expiredOnSchedule);
     }
     delay(3000);
     lcd.clear();//Ex: 01:30:00,20:30:00
