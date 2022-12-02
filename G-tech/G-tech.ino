@@ -155,30 +155,32 @@ void connWeb(String cardID, const char* serverName) {
 
   while (client.connected()) {
       String line = client.readStringUntil('\n');
-      if (line == "\r") {
+      if (line == "\r") {  
         Serial.println("headers received");
         break;
       }
     }
   // Read all the lines of the reply from server and print them to Serial0
     String line = client.readString();
-    Serial.print(line);
+    Serial.print("data: ");
+    Serial.println(line);
     processScheduleData(line);
-    Serial.print("Nama : "); Serial.println(namaOnSchedule); 
-    if (namaOnSchedule != null){
+    Serial.print("Nama : "); 
+    Serial.println(namaOnSchedule); 
+//    if (namaOnSchedule != null){
       lcd.setCursor(0,0);
       lcd.print(namaOnSchedule); //Ex: 01:00:00,20:00:00 
-    }
-    Serial.print("Kartu : "); Serial.println(scheduleMessage);
-    lcd.setCursor(0,1);lcd.print(scheduleMessage);
-    if (scheduleMessage == "Gagal"){
+//    }
+    Serial.print("Kartu : "); Serial.println(messageOnSchedule);
+    lcd.setCursor(0,1);lcd.print(messageOnSchedule);
+    /*if (messageOnSchedule == "Gagal"){
       lcd.setCursor(0,1);
       lcd.print("Kartu Belum Terdaftar");
-    }else if (scheduleMessage == "Masa Kartu Habis"){
+    }else if (messageOnSchedule == "Masa Kartu Habis"){
       lcd.setCursor(0,1);
       lcd.print("Masa Kartu Habis");
-    }
-    if (scheduleMessage != "Gagal" && "Masa Kartu Habis"){
+    }*/
+    if (messageOnSchedule != "Gagal" && messageOnSchedule != "Masa Kartu Habis"){
       Serial.print("Expired Data : "); Serial.println(expiredOnSchedule);
       lcd.setCursor(0,1);
       lcd.print(expiredOnSchedule);
